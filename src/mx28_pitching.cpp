@@ -21,8 +21,6 @@
 #define MX28_ID		0				// id of mx28 (0~253)
 #define BAUDRATE	57600			// baudrate
 #define T_PIN		27				// 20lx(laser)からのタイミングパルスを受け取るピン
-#define MAX_ANG		M_PI*210.0/180.0
-#define MIN_ANG		M_PI*150.0/180.0
 
 #define EEPROM_ID							0x03	// 1byte
 #define EEPROM_BAUDRATE						0x04	// 1byte
@@ -33,13 +31,12 @@
 #define EEPROM_HIGHEST_LIMIT_VOLTAGE		0x0D	// 1byte
 
 #define RAM_GOAL_POSITION					0x1E	// 2byte
-#define RAM_MOVING_SPEED					0x20	// 2byte
+#define RAM_MOVING_SPEED					0x20	// 1byte
 #define RAM_PRESENT_POSITION				0x24	// 1byte
 #define RAM_PRESENT_SPEED					0x26	// 1byte
 #define RAM_PRESENT_LOAD					0x28	// 2byte
 #define RAM_PRESENT_VOLTAGE					0x2A	// 1byte
 #define RAM_PRESENT_TEMPERATURE				0x2B	// 1byte
-#define RAM_GOAL_ACCELERATION				0x49	// 1byte
 
 
 
@@ -79,7 +76,7 @@ void MX28_write(char ID, int start, int bytes, char* data, int fd)
 	TxBuf[6+bytes] = 0xff - sum;
 
 	for(int i=0; i<(7+bytes); i++){
-		//printf("%d ", TxBuf[i]);
+		printf("%d ", TxBuf[i]);
 		serialPutchar(fd, TxBuf[i]);
 	}
 	puts("");
@@ -89,7 +86,7 @@ void MX28_write(char ID, int start, int bytes, char* data, int fd)
 	int status_length = 6;
 	for(int i=0; i<status_length; i++){
 		Status[i] = serialGetchar(fd);
-		//printf("%d ", Status[i]);
+		printf("%d ", Status[i]);
 		if(i==3){
 			status_length = Status[3] + 4;
 		}
@@ -97,42 +94,6 @@ void MX28_write(char ID, int start, int bytes, char* data, int fd)
 	puts("");
 }
 
-void MX28_read(char id, int head_address, int fd)
-{
-	char TxBuf[16];
-	char sum = 0;
-	char RxBuf[16];
-
-	TxBuf[0] = 0xff;
-	TxBuf[1] = 0xff;
-	
-	//TxBuf[2] = 0x01;
-	TxBuf[2] = id;
-	sum += TxBuf[2];
-
-	TxBuf[3] = 0x04;
-	sum += TxBuf[3];
-
-	TxBuf[4] = 0x02;
-	sum += TxBuf[4];
-
-	TxBuf[5] = head_address;
-	sum += TxBuf[5];
-
-	TxBuf[6] = 0x02;
-	sum += TxBuf[6];
-
-	TxBuf[7] = 0xff - sum;
-
-	for(int i=0; i<8; i++){
-		serialPutchar(fd, TxBuf[i]);
-	}
-	//for(int i=0; i<16; i++){
-	for(int i=0; i<8; i++){
-		RxBuf[i] = serialGetchar(fd);
-		printf("%d ", RxBuf[i]);
-	}
-}	
 
 void SetID(char change_id, int fd)
 {
@@ -230,7 +191,6 @@ void MX28SetMovingSpeed(char id, float rpm, int fd)
 		byte[1] |= 0x04;
 	}
 	MX28_write(id, RAM_MOVING_SPEED, 2, byte, fd);
-	printf("setted moving speed : %f\n", rpm);
 	//MX28_write(id, 0x20, 2, byte, fd);
 	//MX28_write(0x01, 0x20, 2, byte, fd);
 }
@@ -284,17 +244,6 @@ float ReadPresentPosition(char id, int fd)
 	//return degree;
 }	
 
-void SetGoalAcceleration(char id, double goal_acceleration, int fd)
-{
-	short data;
-	char byte[2];
-	data = (short)( goal_acceleration / 8.583 );
-	cout<<"goal_acceleration:"<<data<<endl;
-	byte[0] = 0xff & data;
-	MX28_write(id, RAM_GOAL_ACCELERATION, 1, byte, fd);
-}
-
-
 
 boost::mutex cmd_mutex;
 
@@ -335,7 +284,7 @@ void interrupt(void)
 int main(int argc, char** argv)
 {
 	/********* Command Line Options ************/
-	char* opt_str = {(char*)"p:i:y:b:z:jwl:m:r:d:t:a:o:e:f:h"};
+	char* opt_str = {(char*)"p:i:y:b:z:jwl:m:r:d:t:h"};
 	struct option long_opts[] = {
 		{"port",		required_argument,	0,	'p'},
 		{"id",			required_argument,	0,	'i'},
@@ -349,10 +298,6 @@ int main(int argc, char** argv)
 		{"rpm",			required_argument,	0,	'r'},
 		{"degree",		required_argument,	0,	'd'},
 		{"timing",		required_argument,	0,	't'},
-		{"accel",		required_argument,	0,	'a'},
-		{"read-memory",	required_argument,	0,	'o'},
-		{"max_ang",		required_argument,	0,	'e'},
-		{"min_ang",		required_argument,	0,	'f'},
 		{"help",		no_argument,		0,	'h'},
 		{0,				0,					0,    0}
 	};
@@ -374,12 +319,6 @@ int main(int argc, char** argv)
 	double goal_position = 0;
 	bool gp_f = 0;
 	int t_pin = T_PIN;
-	bool ga_f = 0;
-	double accel = 0;
-	int head_address = 0;
-	bool rm_f = 0;
-	double max_ang = MAX_ANG;
-	double min_ang = MIN_ANG;
 
 	int c;
 	while( (c = getopt_long(argc, argv, opt_str, long_opts, &opt_idx)) != -1 ){
@@ -456,30 +395,6 @@ int main(int argc, char** argv)
 					exit(1);
 				}
 				break;
-			case 'a':
-				accel = (double)atof(optarg);
-				ga_f = 1;
-				cout<<"goal_acceleration:"<<accel<<endl;
-				break;
-			case 'o':
-				head_address = (int)strtol(optarg, &buff, 10);
-				rm_f = 1;
-				cout<<"read-memory:"<<head_address<<endl;
-				break;
-			case 'e':
-				max_ang = (double)atof(optarg)*3.141592/180.0;
-				if(max_ang>3.141592*359/180){
-					max_ang=3.141592*359/180;
-				}
-				cout<<"max_ang:"<<max_ang<<endl;
-				break;
-			case 'f':
-				min_ang = (double)atof(optarg)*3.141592/180.0;
-				if(min_ang<3.141592*1/180){
-					min_ang=3.141592*1/180;
-				}
-				cout<<"min_ang:"<<min_ang<<endl;
-				break;
 			case 'h':
 				puts("");
 				printf("Usage: rosrun rp_mx28 mx28_kaizoutyuu [options]\n");
@@ -498,8 +413,6 @@ int main(int argc, char** argv)
 				printf("    --rpm           -r:\n");
 				printf("    --degree        -d:\n");
 				printf("    --timing        -t:\n");
-				printf("    --accel         -a:\n");
-				printf("    --read-memory   -o:\n");
 				printf("    --help          -h:\n");
 				puts("");
 				exit(0);
@@ -574,16 +487,6 @@ int main(int argc, char** argv)
 		SetGoalPosition(id, goal_position, fd);
 		return 0;
 	}
-	if(ga_f){
-		cout<<"goal_acceleration"<<endl;
-		SetGoalAcceleration(id, accel, fd);
-		return 0;
-	}
-	if(rm_f){
-		cout<<"read_memory"<<endl;
-		MX28_read(id, head_address, fd);
-		return 0;
-	}
 
 	cout<<"rpm:"<<rpm<<endl;
 	MX28SetMovingSpeed(id, rpm, fd);
@@ -599,28 +502,14 @@ int main(int argc, char** argv)
 
 	//geometry_msgs::PoseStamped degree;
 	
-	ros::Rate r(10);
+	//ros::Rate r(1);
 	while(ros::ok()){
 		if(timing_flag){
 			degree.header.stamp = ros::Time::now();
 			degree.pose.position.x = ReadPresentPosition(id, fd);
 			position_pub.publish(degree);
 			timing_flag = 0;
-			puts("timing");
 		}
-
-		//if(degree.pose.position.x<min_ang){
-		if(M_PI<degree.pose.position.x && degree.pose.position.x<min_ang){
-			puts("cw");
-			MX28SetMovingSpeed(id, rpm, fd);
-		//}else if(degree.pose.position.x>max_ang){
-		}else if(degree.pose.position.x>max_ang && degree.pose.position.x<M_PI){
-			puts("ccw");
-			MX28SetMovingSpeed(id, -rpm, fd);
-		}else{
-			puts("ok");
-		}
-
 
 
 		//while(serialDataAvail(fd)){
@@ -642,7 +531,7 @@ int main(int argc, char** argv)
 		//MX28SetMovingSpeed(id, rpm, fd);
 		//interrupt();
 		ros::spinOnce();
-		r.sleep();
+		//r.sleep();
 	}
 
 	MX28SetMovingSpeed(id, 0, fd);

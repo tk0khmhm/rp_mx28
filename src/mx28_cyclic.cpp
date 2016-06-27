@@ -599,29 +599,13 @@ int main(int argc, char** argv)
 
 	//geometry_msgs::PoseStamped degree;
 	
-	ros::Rate r(10);
 	while(ros::ok()){
 		if(timing_flag){
 			degree.header.stamp = ros::Time::now();
 			degree.pose.position.x = ReadPresentPosition(id, fd);
 			position_pub.publish(degree);
 			timing_flag = 0;
-			puts("timing");
 		}
-
-		//if(degree.pose.position.x<min_ang){
-		if(M_PI<degree.pose.position.x && degree.pose.position.x<min_ang){
-			puts("cw");
-			MX28SetMovingSpeed(id, rpm, fd);
-		//}else if(degree.pose.position.x>max_ang){
-		}else if(degree.pose.position.x>max_ang && degree.pose.position.x<M_PI){
-			puts("ccw");
-			MX28SetMovingSpeed(id, -rpm, fd);
-		}else{
-			puts("ok");
-		}
-
-
 
 		//while(serialDataAvail(fd)){
 		//	printf("%d ", serialGetchar(fd) );
@@ -642,7 +626,6 @@ int main(int argc, char** argv)
 		//MX28SetMovingSpeed(id, rpm, fd);
 		//interrupt();
 		ros::spinOnce();
-		r.sleep();
 	}
 
 	MX28SetMovingSpeed(id, 0, fd);

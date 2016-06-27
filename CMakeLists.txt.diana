@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(rp_mx28)
 
-#set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -O2")
-
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   sensor_msgs
@@ -17,10 +14,10 @@ find_package(Eigen3 REQUIRED)
 
 find_package(OpenMP REQUIRED)
 if(OPENMP_FOUND)
-	message("OPENMP FOUND")
-	set(MAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+message("OPENMP FOUND")
+set(MAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
 catkin_package(
@@ -49,47 +46,41 @@ include_directories(
 
 ## Declare a cpp executable
 # add_executable(rp_mx28_node src/rp_mx28_node.cpp)
-add_executable(mx28_test src/mx28_test.cpp)
-target_link_libraries(mx28_test
-  ${catkin_LIBRARIES}
-  wiringPi
-)
-
-add_executable(mx28 src/mx28.cpp)
-target_link_libraries(mx28
-  ${catkin_LIBRARIES}
-  wiringPi
-)
-
-add_executable(mx28_interrupt src/mx28_interrupt.cpp)
-target_link_libraries(mx28_interrupt
-  ${catkin_LIBRARIES}
-  wiringPi
-)
-
-add_executable(mx28_interrupt_baud src/mx28_interrupt_baud.cpp)
-target_link_libraries(mx28_interrupt_baud
-  ${catkin_LIBRARIES}
-  wiringPi
-)
-
-add_executable(mx28_kaizoutyuu src/mx28_kaizoutyuu.cpp)
-target_link_libraries(mx28_kaizoutyuu
-  ${catkin_LIBRARIES}
-  wiringPi
-)
-
-add_executable(mx28_cyclic src/mx28_cyclic.cpp)
-target_link_libraries(mx28_cyclic
-  ${catkin_LIBRARIES}
-  wiringPi
-)
-
-add_executable(mx28_error src/mx28_error.cpp)
-target_link_libraries(mx28_error
-  ${catkin_LIBRARIES}
-  wiringPi
-)
+#####add_executable(mx28_test src/mx28_test.cpp)
+#####target_link_libraries(mx28_test
+#####  ${catkin_LIBRARIES}
+#####  wiringPi
+#####)
+#####
+#####add_executable(mx28 src/mx28.cpp)
+#####target_link_libraries(mx28
+#####  ${catkin_LIBRARIES}
+#####  wiringPi
+#####)
+#####
+#####add_executable(mx28_interrupt src/mx28_interrupt.cpp)
+#####target_link_libraries(mx28_interrupt
+#####  ${catkin_LIBRARIES}
+#####  wiringPi
+#####)
+#####
+#####add_executable(mx28_interrupt_baud src/mx28_interrupt_baud.cpp)
+#####target_link_libraries(mx28_interrupt_baud
+#####  ${catkin_LIBRARIES}
+#####  wiringPi
+#####)
+#####
+#####add_executable(mx28_kaizoutyuu src/mx28_kaizoutyuu.cpp)
+#####target_link_libraries(mx28_kaizoutyuu
+#####  ${catkin_LIBRARIES}
+#####  wiringPi
+#####)
+#####
+#####add_executable(mx28_error src/mx28_error.cpp)
+#####target_link_libraries(mx28_error
+#####  ${catkin_LIBRARIES}
+#####  wiringPi
+#####)
 
 add_executable(conical_high_speed src/conical_high_speed.cpp)
 target_link_libraries(conical_high_speed
@@ -101,11 +92,10 @@ target_link_libraries(conical_high_speed_eth
   ${catkin_LIBRARIES}
 )
 
-
-#add_executable(pitching_20lx src/pitching_20lx.cpp)
-#target_link_libraries(pitching_20lx
-#  ${catkin_LIBRARIES}
-#)
+add_executable(pitching_20lx src/pitching_20lx.cpp)
+target_link_libraries(pitching_20lx
+  ${catkin_LIBRARIES}
+)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
