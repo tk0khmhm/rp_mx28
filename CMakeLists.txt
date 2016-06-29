@@ -79,12 +79,23 @@ target_link_libraries(mx28_kaizoutyuu
   wiringPi
 )
 
+add_executable(mx28_swing_centor src/mx28_swing_centor.cpp)
+target_link_libraries(mx28_swing_centor
+  ${catkin_LIBRARIES}
+  wiringPi
+)
+
 add_executable(mx28_cyclic src/mx28_cyclic.cpp)
 target_link_libraries(mx28_cyclic
   ${catkin_LIBRARIES}
   wiringPi
 )
 
+add_executable(mx28_swing_3laser src/mx28_swing_3laser.cpp)
+target_link_libraries(mx28_swing_3laser
+  ${catkin_LIBRARIES}
+  wiringPi
+)
 add_executable(mx28_error src/mx28_error.cpp)
 target_link_libraries(mx28_error
   ${catkin_LIBRARIES}
